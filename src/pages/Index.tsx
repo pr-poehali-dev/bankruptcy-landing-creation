@@ -7,9 +7,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
+declare global {
+  interface Window {
+    ym?: (counterId: number, action: string, goal: string) => void;
+  }
+}
+
+const BACKEND_URL = 'https://functions.poehali.dev/d84114c9-4335-4fe2-8cfc-de4e8497b13a';
+const YM_COUNTER = 106537186;
+
 const Index = () => {
   const { toast } = useToast();
-  const [showQuiz, setShowQuiz] = useState(false);
   const [showConsultForm, setShowConsultForm] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [answers, setAnswers] = useState({
@@ -19,14 +27,12 @@ const Index = () => {
     contact: ''
   });
   const [showFinalForm, setShowFinalForm] = useState(false);
-  const [finalFormData, setFinalFormData] = useState({ name: '', phone: '' });
-  const [consultFormData, setConsultFormData] = useState({ name: '', phone: '', question: '' });
+  const [finalFormData, setFinalFormData] = useState({ name: '', phone: '', city: '' });
+  const [consultFormData, setConsultFormData] = useState({ name: '', phone: '', city: '', question: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const scrollToQuiz = () => {
-    setShowQuiz(true);
-    setTimeout(() => {
-      document.getElementById('quiz-section')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    document.getElementById('quiz-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const scrollToConsult = () => {
@@ -52,37 +58,111 @@ const Index = () => {
     }
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!finalFormData.name.trim() || !finalFormData.phone.trim()) {
+    
+    if (!finalFormData.name.trim() || !finalFormData.phone.trim() || !finalFormData.city.trim()) {
       toast({
         title: 'Заполните все поля',
-        description: 'Пожалуйста, укажите имя и номер телефона',
+        description: 'Пожалуйста, укажите имя, телефон и город',
         variant: 'destructive'
       });
       return;
     }
-    toast({
-      title: 'Заявка отправлена!',
-      description: 'Мы свяжемся с вами в ближайшее время'
-    });
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: finalFormData.name,
+          phone: finalFormData.phone,
+          city: finalFormData.city,
+          form_type: 'quiz_completion',
+          quiz_data: answers
+        })
+      });
+
+      if (response.ok) {
+        if (window.ym) {
+          window.ym(YM_COUNTER, 'reachGoal', 'quiz_submit');
+        }
+        
+        toast({
+          title: 'Заявка отправлена!',
+          description: 'Мы свяжемся с вами в ближайшее время'
+        });
+        
+        setFinalFormData({ name: '', phone: '', city: '' });
+        setAnswers({ debt: '', collateral: '', city: '', contact: '' });
+        setCurrentQuestion(1);
+        setShowFinalForm(false);
+      } else {
+        throw new Error('Ошибка отправки');
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить заявку. Попробуйте позже.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleConsultSubmit = (e: React.FormEvent) => {
+  const handleConsultSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!consultFormData.name.trim() || !consultFormData.phone.trim()) {
+    
+    if (!consultFormData.name.trim() || !consultFormData.phone.trim() || !consultFormData.city.trim()) {
       toast({
         title: 'Заполните обязательные поля',
-        description: 'Укажите имя и номер телефона',
+        description: 'Укажите имя, телефон и город',
         variant: 'destructive'
       });
       return;
     }
-    toast({
-      title: 'Заявка отправлена!',
-      description: 'Наш специалист свяжется с вами в ближайшее время'
-    });
-    setConsultFormData({ name: '', phone: '', question: '' });
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: consultFormData.name,
+          phone: consultFormData.phone,
+          city: consultFormData.city,
+          question: consultFormData.question,
+          form_type: 'consultation'
+        })
+      });
+
+      if (response.ok) {
+        if (window.ym) {
+          window.ym(YM_COUNTER, 'reachGoal', 'consultation_submit');
+        }
+        
+        toast({
+          title: 'Заявка отправлена!',
+          description: 'Наш специалист свяжется с вами в ближайшее время'
+        });
+        
+        setConsultFormData({ name: '', phone: '', city: '', question: '' });
+      } else {
+        throw new Error('Ошибка отправки');
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить заявку. Попробуйте позже.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -239,201 +319,213 @@ const Index = () => {
         </div>
       </section>
 
-      {showQuiz && (
-        <section id="quiz-section" className="py-20 px-4 bg-white">
-          <div className="container mx-auto max-w-3xl">
-            {!showFinalForm ? (
-              <Card className="shadow-2xl border-4 border-secondary bg-gradient-to-br from-white to-orange-50 animate-fade-in">
-                <CardContent className="p-8">
-                  <div className="mb-8">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-semibold text-gray-500">Вопрос {currentQuestion} из 4</span>
-                      <span className="text-sm font-semibold text-secondary">{Math.round((currentQuestion / 4) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div 
-                        className="bg-secondary h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${(currentQuestion / 4) * 100}%` }}
-                      />
-                    </div>
+      <section id="quiz-section" className="py-20 px-4 bg-white">
+        <div className="container mx-auto max-w-3xl">
+          {!showFinalForm ? (
+            <Card className="shadow-2xl border-4 border-secondary bg-gradient-to-br from-white to-orange-50 animate-fade-in">
+              <CardContent className="p-8">
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-sm font-semibold text-gray-500">Вопрос {currentQuestion} из 4</span>
+                    <span className="text-sm font-semibold text-secondary">{Math.round((currentQuestion / 4) * 100)}%</span>
                   </div>
-
-                  {currentQuestion === 1 && (
-                    <div className="space-y-6 animate-fade-in">
-                      <h3 className="text-2xl font-heading font-bold text-primary">
-                        Укажите общую сумму ваших задолженностей
-                      </h3>
-                      <RadioGroup value={answers.debt} onValueChange={(val) => setAnswers({...answers, debt: val})}>
-                        {['до 300 тыс ₽', 'от 300 000 ₽ до 500 000 ₽', 'от 500 000 ₽ до 1 000 000 ₽', 'свыше 1 000 000 ₽'].map((option) => (
-                          <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
-                            <RadioGroupItem value={option} id={option} />
-                            <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                  )}
-
-                  {currentQuestion === 2 && (
-                    <div className="space-y-6 animate-fade-in">
-                      <h3 className="text-2xl font-heading font-bold text-primary">
-                        Есть ли у Вас залоговое имущество?
-                      </h3>
-                      <RadioGroup value={answers.collateral} onValueChange={(val) => setAnswers({...answers, collateral: val})}>
-                        {[
-                          'В залоге ничего нет',
-                          'Да, ипотека (для Вас действует отдельное предложение)',
-                          'Да, автокредит (Возможно сохранить кредитное авто)',
-                          'Да, ипотека и автокредит',
-                          'Затрудняюсь ответить'
-                        ].map((option) => (
-                          <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
-                            <RadioGroupItem value={option} id={option} />
-                            <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                  )}
-
-                  {currentQuestion === 3 && (
-                    <div className="space-y-6 animate-fade-in">
-                      <h3 className="text-2xl font-heading font-bold text-primary">
-                        Из какого вы города? *
-                      </h3>
-                      <Input
-                        placeholder="Введите ваш город"
-                        value={answers.city}
-                        onChange={(e) => setAnswers({...answers, city: e.target.value})}
-                        className="text-lg p-6 border-2"
-                        required
-                      />
-                      <p className="text-sm text-gray-500">* Обязательное поле</p>
-                    </div>
-                  )}
-
-                  {currentQuestion === 4 && (
-                    <div className="space-y-6 animate-fade-in">
-                      <h3 className="text-2xl font-heading font-bold text-primary">
-                        Как для Вас удобнее получить результат анализа вашей ситуации с долгами?
-                      </h3>
-                      <RadioGroup value={answers.contact} onValueChange={(val) => setAnswers({...answers, contact: val})}>
-                        {[
-                          'Личная консультация в офисе',
-                          'Консультация по телефону',
-                          'Отправить результат в WhatsApp',
-                          'Отправить результат в Telegram',
-                          'Отправить результат в VK'
-                        ].map((option) => (
-                          <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
-                            <RadioGroupItem value={option} id={option} />
-                            <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between mt-8">
-                    {currentQuestion > 1 && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                        className="text-lg px-8 py-6"
-                      >
-                        <Icon name="ChevronLeft" className="mr-2" size={20} />
-                        Назад
-                      </Button>
-                    )}
-                    <Button
-                      onClick={handleNext}
-                      disabled={!canProceed()}
-                      className="ml-auto bg-secondary hover:bg-secondary/90 text-lg px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {currentQuestion === 4 ? 'Завершить' : 'Далее'}
-                      <Icon name="ChevronRight" className="ml-2" size={20} />
-                    </Button>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-secondary h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${(currentQuestion / 4) * 100}%` }}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="shadow-2xl border-2 border-secondary animate-fade-in">
-                <CardContent className="p-8">
-                  <div className="text-center mb-8">
-                    <Icon name="CheckCircle" className="mx-auto text-green-600 mb-4" size={64} />
-                    <h3 className="text-3xl font-heading font-bold text-primary mb-4">
-                      Подтвердите, что вы не Робот
+                </div>
+
+                {currentQuestion === 1 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <h3 className="text-2xl font-heading font-bold text-primary">
+                      Укажите общую сумму ваших задолженностей
                     </h3>
-                    <p className="text-lg text-gray-700">
-                      и получите решение по вашей ситуации!
-                    </p>
-                    <p className="text-gray-600 mt-2">
-                      Для этого напишите имя и номер телефона. Мы вышлем бесплатное проверочное смс-сообщение на него.
-                    </p>
+                    <RadioGroup value={answers.debt} onValueChange={(val) => setAnswers({...answers, debt: val})}>
+                      {['до 300 тыс ₽', 'от 300 000 ₽ до 500 000 ₽', 'от 500 000 ₽ до 1 000 000 ₽', 'свыше 1 000 000 ₽'].map((option) => (
+                        <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
+                          <RadioGroupItem value={option} id={option} />
+                          <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {currentQuestion === 2 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <h3 className="text-2xl font-heading font-bold text-primary">
+                      Есть ли у Вас залоговое имущество?
+                    </h3>
+                    <RadioGroup value={answers.collateral} onValueChange={(val) => setAnswers({...answers, collateral: val})}>
+                      {[
+                        'В залоге ничего нет',
+                        'Да, ипотека (для Вас действует отдельное предложение)',
+                        'Да, автокредит (Возможно сохранить кредитное авто)',
+                        'Да, ипотека и автокредит',
+                        'Затрудняюсь ответить'
+                      ].map((option) => (
+                        <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
+                          <RadioGroupItem value={option} id={option} />
+                          <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {currentQuestion === 3 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <h3 className="text-2xl font-heading font-bold text-primary">
+                      Из какого вы города? *
+                    </h3>
+                    <Input
+                      placeholder="Введите ваш город"
+                      value={answers.city}
+                      onChange={(e) => setAnswers({...answers, city: e.target.value})}
+                      className="text-lg p-6 border-2"
+                      required
+                    />
+                    <p className="text-sm text-gray-500">* Обязательное поле</p>
+                  </div>
+                )}
+
+                {currentQuestion === 4 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <h3 className="text-2xl font-heading font-bold text-primary">
+                      Как для Вас удобнее получить результат анализа вашей ситуации с долгами?
+                    </h3>
+                    <RadioGroup value={answers.contact} onValueChange={(val) => setAnswers({...answers, contact: val})}>
+                      {[
+                        'Личная консультация в офисе',
+                        'Консультация по телефону',
+                        'Отправить результат в WhatsApp',
+                        'Отправить результат в Telegram',
+                        'Отправить результат в VK'
+                      ].map((option) => (
+                        <div key={option} className="flex items-center space-x-3 p-4 rounded-lg hover:bg-gray-50 border-2 border-transparent hover:border-secondary/30 transition-all cursor-pointer">
+                          <RadioGroupItem value={option} id={option} />
+                          <Label htmlFor={option} className="flex-1 cursor-pointer text-lg">{option}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                <div className="flex justify-between mt-8">
+                  {currentQuestion > 1 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentQuestion(currentQuestion - 1)}
+                      className="text-lg px-8 py-6"
+                    >
+                      <Icon name="ChevronLeft" className="mr-2" size={20} />
+                      Назад
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceed()}
+                    className="ml-auto bg-secondary hover:bg-secondary/90 text-lg px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {currentQuestion === 4 ? 'Завершить' : 'Далее'}
+                    <Icon name="ChevronRight" className="ml-2" size={20} />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="shadow-2xl border-2 border-secondary animate-fade-in">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <Icon name="CheckCircle" className="mx-auto text-green-600 mb-4" size={64} />
+                  <h3 className="text-3xl font-heading font-bold text-primary mb-4">
+                    Подтвердите, что вы не Робот
+                  </h3>
+                  <p className="text-lg text-gray-700">
+                    и получите решение по вашей ситуации!
+                  </p>
+                  <p className="text-gray-600 mt-2">
+                    Для этого напишите имя, номер телефона и город. Мы вышлем бесплатное проверочное смс-сообщение на него.
+                  </p>
+                </div>
+
+                <form onSubmit={handleFinalSubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="name" className="text-lg font-semibold">Ваше имя *</Label>
+                    <Input
+                      id="name"
+                      placeholder="Введите ваше имя"
+                      value={finalFormData.name}
+                      onChange={(e) => setFinalFormData({...finalFormData, name: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="text-lg font-semibold">Номер телефона *</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+7 (___) ___-__-__"
+                      value={finalFormData.phone}
+                      onChange={(e) => setFinalFormData({...finalFormData, phone: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="final-city" className="text-lg font-semibold">Город *</Label>
+                    <Input
+                      id="final-city"
+                      placeholder="Введите ваш город"
+                      value={finalFormData.city}
+                      onChange={(e) => setFinalFormData({...finalFormData, city: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
                   </div>
 
-                  <form onSubmit={handleFinalSubmit} className="space-y-6">
-                    <div>
-                      <Label htmlFor="name" className="text-lg font-semibold">Ваше имя</Label>
-                      <Input
-                        id="name"
-                        placeholder="Введите ваше имя"
-                        value={finalFormData.name}
-                        onChange={(e) => setFinalFormData({...finalFormData, name: e.target.value})}
-                        className="text-lg p-6 mt-2 border-2"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-lg font-semibold">Номер телефона</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+7 (___) ___-__-__"
-                        value={finalFormData.phone}
-                        onChange={(e) => setFinalFormData({...finalFormData, phone: e.target.value})}
-                        className="text-lg p-6 mt-2 border-2"
-                      />
-                    </div>
-
-                    <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border-2 border-green-200">
-                      <p className="text-center font-semibold text-lg mb-4">После теста, Вы получите:</p>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between bg-white p-4 rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-semibold">«Как не связаться с мошенниками при банкротстве»</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-gray-400 line-through">2990 ₽</p>
-                            <p className="text-green-600 font-bold text-xl">Бесплатно</p>
-                          </div>
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border-2 border-green-200">
+                    <p className="text-center font-semibold text-lg mb-4">После теста, Вы получите:</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between bg-white p-4 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-semibold">«Как не связаться с мошенниками при банкротстве»</p>
                         </div>
-                        <div className="flex items-center justify-between bg-white p-4 rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-semibold">Получите инструкцию для МФЦ</p>
-                            <p className="text-sm text-gray-600">Комплект документов и инструкций для самостоятельного прохождения банкротства</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-gray-400 line-through">5900 ₽</p>
-                            <p className="text-green-600 font-bold text-xl">Бесплатно</p>
-                          </div>
+                        <div className="text-right">
+                          <p className="text-gray-400 line-through">2990 ₽</p>
+                          <p className="text-green-600 font-bold text-xl">Бесплатно</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between bg-white p-4 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-semibold">Получите инструкцию для МФЦ</p>
+                          <p className="text-sm text-gray-600">Комплект документов и инструкций для самостоятельного прохождения банкротства</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-400 line-through">5900 ₽</p>
+                          <p className="text-green-600 font-bold text-xl">Бесплатно</p>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <Button 
-                      type="submit"
-                      className="w-full bg-secondary hover:bg-secondary/90 text-xl py-8"
-                    >
-                      <Icon name="Send" className="mr-3" size={24} />
-                      ПОЛУЧИТЬ БЕСПЛАТНЫЙ АНАЛИЗ
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </section>
-      )}
+                  <Button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-xl py-8 disabled:opacity-50"
+                  >
+                    <Icon name="Send" className="mr-3" size={24} />
+                    {isSubmitting ? 'ОТПРАВКА...' : 'ПОЛУЧИТЬ БЕСПЛАТНЫЙ АНАЛИЗ'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
 
       {showConsultForm && (
         <section id="consult-section" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
@@ -475,6 +567,17 @@ const Index = () => {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="consult-city" className="text-lg font-semibold">Город *</Label>
+                    <Input
+                      id="consult-city"
+                      placeholder="Введите ваш город"
+                      value={consultFormData.city}
+                      onChange={(e) => setConsultFormData({...consultFormData, city: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="consult-question" className="text-lg font-semibold">Ваш вопрос (необязательно)</Label>
                     <Input
                       id="consult-question"
@@ -487,10 +590,11 @@ const Index = () => {
 
                   <Button 
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-xl py-8"
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-xl py-8 disabled:opacity-50"
                   >
                     <Icon name="Phone" className="mr-3" size={24} />
-                    ПОЛУЧИТЬ КОНСУЛЬТАЦИЮ
+                    {isSubmitting ? 'ОТПРАВКА...' : 'ПОЛУЧИТЬ КОНСУЛЬТАЦИЮ'}
                   </Button>
                 </form>
               </CardContent>
