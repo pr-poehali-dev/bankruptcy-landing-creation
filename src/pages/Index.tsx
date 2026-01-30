@@ -297,14 +297,16 @@ const Index = () => {
                   {currentQuestion === 3 && (
                     <div className="space-y-6 animate-fade-in">
                       <h3 className="text-2xl font-heading font-bold text-primary">
-                        Из какого вы города?
+                        Из какого вы города? *
                       </h3>
                       <Input
                         placeholder="Введите ваш город"
                         value={answers.city}
                         onChange={(e) => setAnswers({...answers, city: e.target.value})}
                         className="text-lg p-6 border-2"
+                        required
                       />
+                      <p className="text-sm text-gray-500">* Обязательное поле</p>
                     </div>
                   )}
 
