@@ -152,29 +152,29 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-5xl text-center">
-          <Icon name="Book" className="mx-auto mb-6 animate-pulse" size={64} />
-          <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6">
+          <Icon name="Book" className="mx-auto mb-6 text-primary" size={64} />
+          <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6 text-primary">
             Узнайте подходите ли Вы под государственную программу списания долгов
           </h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
-            <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all">
-              <CardContent className="p-6">
-                <Icon name="Shield" className="mx-auto mb-4" size={48} />
-                <p className="font-semibold text-lg">Вам это подойдет 100%</p>
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <CardContent className="p-8">
+                <Icon name="Shield" className="mx-auto mb-4" size={56} />
+                <p className="font-bold text-xl">Вам это подойдет 100%</p>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all">
-              <CardContent className="p-6">
-                <Icon name="ShieldAlert" className="mx-auto mb-4" size={48} />
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all">
+              <CardContent className="p-8">
+                <Icon name="ShieldAlert" className="mx-auto mb-4" size={56} />
                 <p className="font-semibold text-lg">«Как не связаться с мошенниками при банкротстве»</p>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all">
-              <CardContent className="p-6">
-                <Icon name="Users" className="mx-auto mb-4" size={48} />
-                <p className="font-semibold text-lg">«7 способов избавиться от коллекторов в 2025г»</p>
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all">
+              <CardContent className="p-8">
+                <Icon name="Users" className="mx-auto mb-4" size={56} />
+                <p className="font-semibold text-lg">«7 способов избавиться от коллекторов в 2026г»</p>
               </CardContent>
             </Card>
           </div>
@@ -196,40 +196,42 @@ const Index = () => {
             {[
               {
                 icon: 'FileX',
-                color: 'bg-red-500',
+                color: 'border-red-200 bg-red-50',
+                iconColor: 'text-red-600',
                 title: 'Банкротство по 127-ФЗ не гарантирует списание долгов',
                 text: 'Внимательно изучите договор. Результатом будет списание долгов или статус банкрота. Есть ли хоть какие то гарантии результата.'
               },
               {
                 icon: 'Gavel',
-                color: 'bg-orange-500',
+                color: 'border-orange-200 bg-orange-50',
+                iconColor: 'text-orange-600',
                 title: 'За преднамеренное банкротство грозит Уголовная ответственность',
                 text: 'Если будут ошибки и кредитор заподозрит, что банкротство фиктивное, то Вам грозит лишение свободы до 7 лет и штраф на сумму до 5 млн рублей по статье 196 УК РФ.'
               },
               {
                 icon: 'Home',
-                color: 'bg-blue-500',
+                color: 'border-blue-200 bg-blue-50',
+                iconColor: 'text-blue-600',
                 title: 'Можно лишиться имущества',
                 text: 'У Вас ипотека, автокредит или Вы совершали сделки с имуществом за последние 3 года? Прежде чем приступать к процедуре, необходимо проанализировать все сделки и доказать добросовестность в отношении их'
               },
               {
                 icon: 'HelpCircle',
-                color: 'bg-purple-500',
+                color: 'border-purple-200 bg-purple-50',
+                iconColor: 'text-purple-600',
                 title: 'А точно нужно банкротиться сейчас?',
                 text: 'Банкротство по 127 ФЗ - не единственный выход, имеются как минимум 2 альтернативы: 1. реструктуризация долга; 2. упрощённое банкротство через МФЦ. Каждый случай уникальный и ситуацию всегда необходимо рассматривать в комплексе.'
               }
             ].map((card, i) => (
-              <Card key={i} className="hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden group">
-                <CardContent className="p-0">
-                  <div className={`${card.color} p-6 text-white transform group-hover:scale-105 transition-transform duration-300`}>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="bg-white/20 backdrop-blur p-4 rounded-full">
-                        <Icon name={card.icon} size={32} />
-                      </div>
-                      <h3 className="text-xl font-heading font-bold flex-1">{card.title}</h3>
+              <Card key={i} className={`hover:shadow-xl transition-all duration-300 border-2 ${card.color} group`}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-white p-3 rounded-full shadow-sm">
+                      <Icon name={card.icon} className={card.iconColor} size={32} />
                     </div>
-                    <p className="leading-relaxed">{card.text}</p>
+                    <h3 className="text-lg font-heading font-bold flex-1 text-gray-800">{card.title}</h3>
                   </div>
+                  <p className="leading-relaxed text-gray-700">{card.text}</p>
                 </CardContent>
               </Card>
             ))}
@@ -241,7 +243,7 @@ const Index = () => {
         <section id="quiz-section" className="py-20 px-4 bg-white">
           <div className="container mx-auto max-w-3xl">
             {!showFinalForm ? (
-              <Card className="shadow-2xl border-2 border-primary/20 animate-fade-in">
+              <Card className="shadow-2xl border-4 border-secondary bg-gradient-to-br from-white to-orange-50 animate-fade-in">
                 <CardContent className="p-8">
                   <div className="mb-8">
                     <div className="flex justify-between items-center mb-4">
