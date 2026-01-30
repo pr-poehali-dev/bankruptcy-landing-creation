@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 const Index = () => {
   const { toast } = useToast();
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showConsultForm, setShowConsultForm] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [answers, setAnswers] = useState({
     debt: '',
@@ -19,11 +20,19 @@ const Index = () => {
   });
   const [showFinalForm, setShowFinalForm] = useState(false);
   const [finalFormData, setFinalFormData] = useState({ name: '', phone: '' });
+  const [consultFormData, setConsultFormData] = useState({ name: '', phone: '', question: '' });
 
   const scrollToQuiz = () => {
     setShowQuiz(true);
     setTimeout(() => {
       document.getElementById('quiz-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const scrollToConsult = () => {
+    setShowConsultForm(true);
+    setTimeout(() => {
+      document.getElementById('consult-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
@@ -57,6 +66,23 @@ const Index = () => {
       title: 'Заявка отправлена!',
       description: 'Мы свяжемся с вами в ближайшее время'
     });
+  };
+
+  const handleConsultSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consultFormData.name.trim() || !consultFormData.phone.trim()) {
+      toast({
+        title: 'Заполните обязательные поля',
+        description: 'Укажите имя и номер телефона',
+        variant: 'destructive'
+      });
+      return;
+    }
+    toast({
+      title: 'Заявка отправлена!',
+      description: 'Наш специалист свяжется с вами в ближайшее время'
+    });
+    setConsultFormData({ name: '', phone: '', question: '' });
   };
 
   return (
@@ -130,7 +156,7 @@ const Index = () => {
         <div className="container mx-auto max-w-5xl text-center">
           <Icon name="Book" className="mx-auto mb-6 animate-pulse" size={64} />
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6">
-            Узнайте подходите ли Вы под государственную программу списания долгов в Первоуральске
+            Узнайте подходите ли Вы под государственную программу списания долгов
           </h2>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <Card className="bg-white/10 backdrop-blur border-white/20 hover:bg-white/20 transition-all">
@@ -170,38 +196,39 @@ const Index = () => {
             {[
               {
                 icon: 'FileX',
+                color: 'bg-red-500',
                 title: 'Банкротство по 127-ФЗ не гарантирует списание долгов',
                 text: 'Внимательно изучите договор. Результатом будет списание долгов или статус банкрота. Есть ли хоть какие то гарантии результата.'
               },
               {
                 icon: 'Gavel',
+                color: 'bg-orange-500',
                 title: 'За преднамеренное банкротство грозит Уголовная ответственность',
-                text: 'Если будут ошибки и кредитор заподозрит, что банкротство фиктивное, то Вам грозит лишение свободы до 7 лет и штраф на сумму до 5 млн рублей по статье 196 УК РФ. Все будет зависеть от размера ущерба, способа совершения деяния, компенсации или отказа от нее, а также от ряда других факторов'
+                text: 'Если будут ошибки и кредитор заподозрит, что банкротство фиктивное, то Вам грозит лишение свободы до 7 лет и штраф на сумму до 5 млн рублей по статье 196 УК РФ.'
               },
               {
                 icon: 'Home',
+                color: 'bg-blue-500',
                 title: 'Можно лишиться имущества',
                 text: 'У Вас ипотека, автокредит или Вы совершали сделки с имуществом за последние 3 года? Прежде чем приступать к процедуре, необходимо проанализировать все сделки и доказать добросовестность в отношении их'
               },
               {
                 icon: 'HelpCircle',
+                color: 'bg-purple-500',
                 title: 'А точно нужно банкротиться сейчас?',
                 text: 'Банкротство по 127 ФЗ - не единственный выход, имеются как минимум 2 альтернативы: 1. реструктуризация долга; 2. упрощённое банкротство через МФЦ. Каждый случай уникальный и ситуацию всегда необходимо рассматривать в комплексе.'
               }
             ].map((card, i) => (
-              <Card key={i} className="hover:shadow-2xl transition-shadow duration-300 border-2 border-gray-200">
-                <CardContent className="p-8">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="bg-secondary/10 p-4 rounded-full">
-                      <Icon name={card.icon} className="text-secondary" size={32} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start gap-2 mb-3">
-                        <span className="text-4xl font-bold text-secondary">{i + 1}</span>
-                        <h3 className="text-xl font-heading font-bold text-primary mt-1">{card.title}</h3>
+              <Card key={i} className="hover:shadow-2xl transition-all duration-300 border-0 overflow-hidden group">
+                <CardContent className="p-0">
+                  <div className={`${card.color} p-6 text-white transform group-hover:scale-105 transition-transform duration-300`}>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="bg-white/20 backdrop-blur p-4 rounded-full">
+                        <Icon name={card.icon} size={32} />
                       </div>
-                      <p className="text-gray-700 leading-relaxed">{card.text}</p>
+                      <h3 className="text-xl font-heading font-bold flex-1">{card.title}</h3>
                     </div>
+                    <p className="leading-relaxed">{card.text}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -214,7 +241,7 @@ const Index = () => {
         <section id="quiz-section" className="py-20 px-4 bg-white">
           <div className="container mx-auto max-w-3xl">
             {!showFinalForm ? (
-              <Card className="shadow-2xl border-2 border-primary/20">
+              <Card className="shadow-2xl border-2 border-primary/20 animate-fade-in">
                 <CardContent className="p-8">
                   <div className="mb-8">
                     <div className="flex justify-between items-center mb-4">
@@ -223,14 +250,14 @@ const Index = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
-                        className="bg-secondary h-3 rounded-full transition-all duration-300"
+                        className="bg-secondary h-3 rounded-full transition-all duration-500"
                         style={{ width: `${(currentQuestion / 4) * 100}%` }}
                       />
                     </div>
                   </div>
 
                   {currentQuestion === 1 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 animate-fade-in">
                       <h3 className="text-2xl font-heading font-bold text-primary">
                         Укажите общую сумму ваших задолженностей
                       </h3>
@@ -246,7 +273,7 @@ const Index = () => {
                   )}
 
                   {currentQuestion === 2 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 animate-fade-in">
                       <h3 className="text-2xl font-heading font-bold text-primary">
                         Есть ли у Вас залоговое имущество?
                       </h3>
@@ -268,7 +295,7 @@ const Index = () => {
                   )}
 
                   {currentQuestion === 3 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 animate-fade-in">
                       <h3 className="text-2xl font-heading font-bold text-primary">
                         Из какого вы города?
                       </h3>
@@ -282,7 +309,7 @@ const Index = () => {
                   )}
 
                   {currentQuestion === 4 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 animate-fade-in">
                       <h3 className="text-2xl font-heading font-bold text-primary">
                         Как для Вас удобнее получить результат анализа вашей ситуации с долгами?
                       </h3>
@@ -317,7 +344,7 @@ const Index = () => {
                     <Button
                       onClick={handleNext}
                       disabled={!canProceed()}
-                      className="ml-auto bg-secondary hover:bg-secondary/90 text-lg px-8 py-6"
+                      className="ml-auto bg-secondary hover:bg-secondary/90 text-lg px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {currentQuestion === 4 ? 'Завершить' : 'Далее'}
                       <Icon name="ChevronRight" className="ml-2" size={20} />
@@ -326,7 +353,7 @@ const Index = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="shadow-2xl border-2 border-secondary">
+              <Card className="shadow-2xl border-2 border-secondary animate-fade-in">
                 <CardContent className="p-8">
                   <div className="text-center mb-8">
                     <Icon name="CheckCircle" className="mx-auto text-green-600 mb-4" size={64} />
@@ -403,6 +430,89 @@ const Index = () => {
           </div>
         </section>
       )}
+
+      {showConsultForm && (
+        <section id="consult-section" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+          <div className="container mx-auto max-w-2xl">
+            <Card className="shadow-2xl border-2 border-blue-200 animate-fade-in">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <Icon name="MessageSquare" className="mx-auto text-blue-600 mb-4" size={64} />
+                  <h3 className="text-3xl font-heading font-bold text-primary mb-4">
+                    Получить консультацию бесплатно
+                  </h3>
+                  <p className="text-lg text-gray-700">
+                    Оставьте заявку, и наш специалист свяжется с вами в ближайшее время
+                  </p>
+                </div>
+
+                <form onSubmit={handleConsultSubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="consult-name" className="text-lg font-semibold">Ваше имя *</Label>
+                    <Input
+                      id="consult-name"
+                      placeholder="Введите ваше имя"
+                      value={consultFormData.name}
+                      onChange={(e) => setConsultFormData({...consultFormData, name: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="consult-phone" className="text-lg font-semibold">Номер телефона *</Label>
+                    <Input
+                      id="consult-phone"
+                      type="tel"
+                      placeholder="+7 (___) ___-__-__"
+                      value={consultFormData.phone}
+                      onChange={(e) => setConsultFormData({...consultFormData, phone: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="consult-question" className="text-lg font-semibold">Ваш вопрос (необязательно)</Label>
+                    <Input
+                      id="consult-question"
+                      placeholder="Опишите вашу ситуацию"
+                      value={consultFormData.question}
+                      onChange={(e) => setConsultFormData({...consultFormData, question: e.target.value})}
+                      className="text-lg p-6 mt-2 border-2"
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-xl py-8"
+                  >
+                    <Icon name="Phone" className="mr-3" size={24} />
+                    ПОЛУЧИТЬ КОНСУЛЬТАЦИЮ
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
+
+      <section className="py-16 px-4 bg-gradient-to-r from-secondary to-orange-600 text-white">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6">
+            Остались вопросы? Мы поможем!
+          </h2>
+          <p className="text-xl mb-8">
+            Получите бесплатную консультацию от наших специалистов
+          </p>
+          <Button 
+            onClick={scrollToConsult}
+            size="lg" 
+            className="bg-white text-secondary hover:bg-gray-100 text-xl px-12 py-8 rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
+          >
+            <Icon name="MessageCircle" className="mr-3" size={28} />
+            ЗАДАТЬ ВОПРОС СПЕЦИАЛИСТУ
+          </Button>
+        </div>
+      </section>
 
       <footer className="bg-primary text-white py-12 px-4">
         <div className="container mx-auto max-w-6xl">
